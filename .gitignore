@@ -16,9 +16,7 @@ build/
 *.ipynb_checkpoints
 
 # Data
-data/raw/*.csv
 data/interim/*.csv
-# data/processed/*.csv
 
 # Models
 models/*.h5
