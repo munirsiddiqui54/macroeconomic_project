@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Load model and scaler
-MODEL_PATH = '../../models/macroeconomic_model.pkl'
+MODEL_PATH = '../../models/gdp_growth_model.pkl'
 SCALER_PATH = '../../models/scaler.pkl'
+COUNTRY_ENCODER = '../../models/country_encoder.pkl'
 
 try:
     with open(MODEL_PATH, 'rb') as f:
@@ -22,74 +23,77 @@ try:
     with open(SCALER_PATH, 'rb') as f:
         scaler = pickle.load(f)
     
-    logger.info("Model and scaler loaded successfully")
+    with open(COUNTRY_ENCODER, 'rb') as f:
+        country_encoder = pickle.load(f)
+
+    logger.info("✅ Model, scaler, and country_encoder loaded successfully.")
 except Exception as e:
-    logger.error(f"Error loading model: {str(e)}")
+    logger.error(f"❌ Error loading model components: {str(e)}")
     model = None
     scaler = None
+    country_encoder = None
 
-@app.route('/')
-def home():
-    """Home endpoint"""
-    return jsonify({
-        'message': 'Macroeconomic Prediction API',
-        'version': '1.0',
-        'endpoints': {
-            '/predict': 'POST - Predict next year GDP growth',
-            '/health': 'GET - Health check'
-        }
-    })
 
-@app.route('/health')
+@app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
     return jsonify({
-        'status': 'healthy',
+        'status': 'healthy' if model else 'error',
         'model_loaded': model is not None
     })
 
+
 @app.route('/predict', methods=['POST'])
 def predict():
-    """Predict next year's GDP growth"""
+    """Predict GDP Growth"""
+    if not model or not scaler or not country_encoder:
+        return jsonify({'error': 'Model not loaded properly'}), 500
+
     try:
-        # Get JSON data
         data = request.get_json()
-        
-        # Validate required fields
-        required_fields = [
-            'gdp_growth_lag1', 'inflation_lag1', 'unemployment_lag1',
-            'gdp_growth_ma3', 'inflation_ma3', 'year'
-        ]
-        
-        for field in required_fields:
-            if field not in data:
-                return jsonify({'error': f'Missing required field: {field}'}), 400
-        
-        # Prepare features
-        features = np.array([[
-            data['gdp_growth_lag1'],
-            data['inflation_lag1'],
-            data['unemployment_lag1'],
-            data['gdp_growth_ma3'],
-            data['inflation_ma3'],
-            data['year']
-        ]])
-        
+        if data is None:
+            return jsonify({'error': 'Request must be JSON'}), 400
+
+        # Extract fields
+        country_code = data.get('country_code')
+        year = data.get('year')
+        inflation = data.get('inflation')
+        unemployment = data.get('unemployment')
+
+        # Validation
+        if None in [country_code, year, inflation, unemployment]:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Encode country
+        if country_code not in list(country_encoder.classes_):
+            return jsonify({'error': f'Country code {country_code} not recognized'}), 400
+
+        code_num = country_encoder.transform([country_code])[0]
+
+        # Prepare input as DataFrame
+        input_data = pd.DataFrame([{
+            'Year': year,
+            'Inflation': inflation,
+            'Unemployment': unemployment,
+            'Country_Code_Num': code_num
+        }])
+
         # Scale features
-        features_scaled = scaler.transform(features)
-        
-        # Make prediction
-        prediction = model.predict(features_scaled)
-        
+        input_scaled = scaler.transform(input_data)
+
+        # Predict
+        prediction = model.predict(input_scaled)[0]
+
         return jsonify({
-            'prediction': float(prediction[0]),
-            'year': data['year'] + 1,
-            'message': 'Prediction successful'
+            'country_code': country_code,
+            'year': year,
+            'predicted_gdp_growth': round(float(prediction), 3)
         })
-    
+
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
