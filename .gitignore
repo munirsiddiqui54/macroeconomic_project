@@ -21,7 +21,6 @@ data/interim/*.csv
 # data/processed/*.csv
 
 # Models
-models/*.pkl
 models/*.h5
 
 
