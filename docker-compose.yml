@@ -11,6 +11,5 @@ services:
     environment:
       - FLASK_ENV=production
     volumes:
-      - ../models:/app/models
       - ../logs:/app/logs
     restart: unless-stopped
