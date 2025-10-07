@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # Load the dataset
-df = pd.read_csv('../data/processed/macroeconomic.csv')
+df = pd.read_csv('../../data/processed/macroeconomic.csv')
 
 # Streamlit title and description
 st.title("Macroeconomic Data Dashboard")

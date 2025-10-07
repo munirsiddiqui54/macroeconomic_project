@@ -3,8 +3,8 @@ version: '3.8'
 services:
   macroeconomic-api:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: macroeconomic_api
     ports:
       - "5000:5000"

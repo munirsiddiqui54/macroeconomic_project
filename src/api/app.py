@@ -12,9 +12,19 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Load model and scaler
-MODEL_PATH = '../../models/gdp_growth_model.pkl'
-SCALER_PATH = '../../models/scaler.pkl'
-COUNTRY_ENCODER = '../../models/country_encoder.pkl'
+# MODEL_PATH = '../../models/gdp_growth_model.pkl'
+# SCALER_PATH = '../../models/scaler.pkl'
+# COUNTRY_ENCODER = '../../models/country_encoder.pkl'
+
+# Load model and scaler
+
+import os
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+MODEL_PATH = os.path.join(BASE_DIR, 'models', 'gdp_growth_model.pkl')
+SCALER_PATH = os.path.join(BASE_DIR, 'models', 'scaler.pkl')
+COUNTRY_ENCODER = os.path.join(BASE_DIR, 'models', 'country_encoder.pkl')
+
 
 try:
     with open(MODEL_PATH, 'rb') as f:
