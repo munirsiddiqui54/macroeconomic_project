@@ -85,7 +85,7 @@ class Model:
         logger.info(f"Model training completed: R² = {r2:.3f}, RMSE = {rmse:.3f}")
         return self.model, self.scaler
 
-    def save_model(self, model_dir='../../models'):
+    def save_model(self, model_dir='../models'):
         """Save model, scaler, and encoder to disk"""
         os.makedirs(model_dir, exist_ok=True)
         model_path = os.path.join(model_dir, 'gdp_growth_model.pkl')
